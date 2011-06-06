@@ -1,30 +1,36 @@
 Content of inspector
 --------------------
+
     inspector_cs.sh             Czech version of the SHELL script
     inspector_cs.sh.signature   SHA256 signature for verification purposes
 
 Configuration instructions
 --------------------------
+
 No configuration necessary.
 
 Installation instructions
 -------------------------
+
  1. Place the script into a directory containing binaries, e.g. /root/bin/.
  2. Recommended: Verify an authenticity of the source code. See below.
  3. Run the script.
 
 Operating instructions
 ----------------------
+
 The script will *NEVER* try to modify your server's configuration on
 its own. It just gathers all necessary information and warns you about
 performance, security and other issues.
 
 A file manifest
 ---------------
+
 You should check the OpenSSL signature of the corresponding
 SHELL script against my public key which is to be found at
 https://ca.svetdoma.cz/filip@valder_cz.pub. This 3rd party verification
 provides some higher authenticity of the code. Verification example:
+
  1. Save the signature as inspector_cs.sh.signature.
  2. Save the pubkey as filip@valder_cz.pub.
  3. Run: openssl dgst -sha256 -verify filip@valder_cz.pub -signature \
@@ -38,25 +44,31 @@ provides some higher authenticity of the code. Verification example:
 
 Copyright and licensing information
 -----------------------------------
+
 NO copyright, NO licensing, ever. Use it as you want but don't blame me
 for *ANYTHING*.
 
 Contact information
 -------------------
+
 E-mail: filip@valder.cz
 
 Known bugs
 ----------
+
 Please, report them!!!
 
 Troubleshooting
 ---------------
+
 FIRST help yourselves, THEN contact me, please.
 
 Credits and acknowledgments
 ---------------------------
+
 Open-minded people use and create open source software.
 
 A changelog
 -----------
+
 See https://github.com/filipvalder/inspector/commits/.
