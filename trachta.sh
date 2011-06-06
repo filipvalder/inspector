@@ -1,14 +1,16 @@
 #!/bin/bash
 # Autor: Filip Valder (filip.valder@vsb.cz)
-# Datum: 1.6.2011
-# Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (ceska verze)
-# Nazev: inspector_cs.sh
+# Datum: 6.6.2011
+# Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
+# Nazev: trachta.sh
 # Verze: STABILNI
 
 
 # Konfigurace
+
 # Jazyk
 export LANG=C
+
 # Spolecna konfigurace
 function conf ( ) {
 	HOSTNAME_DOMAIN=`hostname -d`
@@ -20,6 +22,7 @@ function conf ( ) {
 		"/etc/SuSE-release|sles|SLES"
 	)
 }
+
 # Konfigurace distribuci
 function conf_centos_rhel ( ) {
 	SERVICES_CHKCONFIG_2="on"
@@ -43,11 +46,13 @@ function conf_unknown ( ) {
 
 
 # Funkce
+
 # Vystredit text
 function center () {
 	ALIGN=$[(75-${#1})/2]
 	printf %-${ALIGN}s%s\\n "" "$1"
 }
+
 # Iniciace kontrol
 function check ( ) {
 	check_system
@@ -66,6 +71,7 @@ function check ( ) {
 	check_other
 	check_$1
 }
+
 # Spolecne kontroly
 function check_backup ( ) {
 	I=0
@@ -219,7 +225,7 @@ function check_services () {
 	echo "* $PRE"
 	MSG0="cron je zapnuty"
 	MSG1="cron je vypnuty"
-	pgrep cron > /dev/null && [ $I -ne 0 ] && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
+	pgrep cron > /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	log 2 "$PRE: naslouchajici sluzby (PID/nazev)"
 	for SRV in `netstat -lnp | egrep "^(tcp|udp).*[0-9]*/" | sed "s/.*[^0-9]\([0-9]*\/[^ :]*\).*/\1/" | sort -n | uniq` ; do
 		SRV_NAME="`echo \"$SRV\" | cut -d \"/\" -f 2`"
@@ -370,6 +376,7 @@ function check_users () {
 	[ -z "$WHO" ] && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	log_line "$WHO"
 }
+
 # Kontroly distribuci
 function check_centos_rhel ( ) {
 	return
@@ -383,10 +390,11 @@ function check_sles ( ) {
 function check_unknown ( ) {
 	return
 }
+
 # Hlavicka
 function header () {
 	echo
-	center "Inspektor na serveru $HOSTNAME_SHORT"
+	center "Trachta na serveru $HOSTNAME_SHORT"
 	center "(spusteno `date +%-d.%-m.%Y\ v\ %-H:%M:%S`)"
 	echo "---------------------------------------------------------------------------"
 	printf %-16s%s\\n "Linux verze:" "`uname -a`"
@@ -400,6 +408,7 @@ function header () {
 	lspci | grep -cq VMware && VIRT="ano" || VIRT="ne"
 	printf %-16s%s\\n "Virt. stroj:" "$VIRT"
 }
+
 # Zaznam
 function log ( ) {
 	let SUM++
@@ -439,6 +448,7 @@ function log_list ( ) {
 		log 3 "$WRD"
 	done
 }
+
 # Hlavni funkce
 function main ( ) {
 	for DIST in ${DISTS[@]} ; do
@@ -452,6 +462,7 @@ function main ( ) {
 	echo "---------------------------------------------------------------------------"
 	[ ! -r "$DIST_FILE" ] && check unknown || check $DIST_FUNC
 }
+
 # Vysledky
 function results () {
 	echo
@@ -467,6 +478,7 @@ function results () {
 	echo "* Upozorneni: ${WARN:-0}"
 	echo
 }
+
 ## Ano/ne?
 #function yes_no ( ) {
 #	read -p "$1 (A/N/a/n)? " YES_NO
@@ -478,9 +490,8 @@ function results () {
 
 # Program (vse zformatovat)
 {
-# Spusteni vyzaduje efektivni UID 0.
-[ "`id -u`" -eq 0 ] || { echo "Chyba: $0 vyzaduje spusteni pod uzivatelem 'root'." 1>&2 && exit 1 ; }
-
-# Konfigurace, hlavicka, hlavni funkce, vysledky
-conf ; header ; main ; results
+	# Spusteni vyzaduje efektivni UID 0.
+	[ "`id -u`" -eq 0 ] || { echo "Chyba: $0 vyzaduje spusteni pod uzivatelem 'root'." 1>&2 && exit 1 ; }
+	# Konfigurace, hlavicka, hlavni funkce, vysledky
+	conf ; header ; main ; results
 } | fmt -s
