@@ -36,15 +36,16 @@ provides some higher authenticity of the code. Verification example:
  2. Save the pubkey as filip@valder_cz.pub.
  3. Run:
 
-    openssl dgst -sha256 -verify filip@valder_cz.pub -signature
-    inspector_cs.sh.signature /root/bin/inspector_cs.sh
+        openssl dgst -sha256 -verify filip@valder_cz.pub -signature
+        inspector_cs.sh.signature /root/bin/inspector_cs.sh
 
  4. If the output says 'Verified OK', you can run the script securely.
- 5. Anytime a new version of the script comes out, download it along with
-    the signature and verify it again.
+ 5. Anytime a new version of the script comes out, download it along
+ with the signature and verify it again.
+
  6. Hint: Import the SvetDoma.cz CA's root certificate. Apply a crontab
-    for getting the script, it's signature and my pubkey. Enjoy staying
-    up-to-date without any security penalty.
+ for getting the script, it's signature and my pubkey. Enjoy staying
+ up-to-date without any security penalty.
 
 Copyright and licensing information
 -----------------------------------
