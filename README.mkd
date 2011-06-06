@@ -12,7 +12,8 @@ No configuration necessary.
 Installation instructions
 -------------------------
 
- 1. Place the script into a directory containing binaries, e.g. /root/bin/.
+ 1. Place the script into a directory containing binaries,
+ e.g. /root/bin/.
  2. Recommended: Verify an authenticity of the source code. See below.
  3. Run the script.
 
@@ -33,8 +34,11 @@ provides some higher authenticity of the code. Verification example:
 
  1. Save the signature as inspector_cs.sh.signature.
  2. Save the pubkey as filip@valder_cz.pub.
- 3. Run: openssl dgst -sha256 -verify filip@valder_cz.pub -signature \
+ 3. Run:
+
+    openssl dgst -sha256 -verify filip@valder_cz.pub -signature
     inspector_cs.sh.signature /root/bin/inspector_cs.sh
+
  4. If the output says 'Verified OK', you can run the script securely.
  5. Anytime a new version of the script comes out, download it along with
     the signature and verify it again.
