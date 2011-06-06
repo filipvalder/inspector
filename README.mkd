@@ -1,2 +1,2 @@
-Viz https://github.com/filipvalder/inspector.
----------------------------------------------
+Viz https://github.com/filipvalder/inspector/blob/master/README.mkd.
+--------------------------------------------------------------------
