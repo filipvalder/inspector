@@ -217,6 +217,9 @@ function check_services () {
 	I=0
 	PRE="Sluzby"
 	echo "* $PRE"
+	MSG0="cron je zapnuty"
+	MSG1="cron je vypnuty"
+	pgrep cron > /dev/null && [ $I -ne 0 ] && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	log 2 "$PRE: naslouchajici sluzby (PID/nazev)"
 	for SRV in `netstat -lnp | egrep "^(tcp|udp).*[0-9]*/" | sed "s/.*[^0-9]\([0-9]*\/[^ :]*\).*/\1/" | sort -n | uniq` ; do
 		SRV_NAME="`echo \"$SRV\" | cut -d \"/\" -f 2`"
