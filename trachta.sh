@@ -490,7 +490,9 @@ function results () {
 #}
 
 
-# Program (vse zformatovat)
+# Program
+
+# Vse zformatovat
 {
 	# Spusteni vyzaduje efektivni UID 0.
 	[ "`id -u`" -eq 0 ] || { echo "Chyba: $0 vyzaduje spusteni pod uzivatelem 'root'." 1>&2 && exit 1 ; }
