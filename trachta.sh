@@ -21,24 +21,23 @@ function conf ( ) {
 		"/etc/debian_version|debian_ubuntu|Debian/Ubuntu"
 		"/etc/SuSE-release|sles|SLES"
 	)
+	SERVICES_CHKCONFIG_2="on"
+	SERVICES_CHKCONFIG_3="on"
+	SERVICES_CHKCONFIG_4="on"
+	SERVICES_CHKCONFIG_5="on"
+	SERVICES_CRON="cron"
 }
 
 # Konfigurace distribuci
 function conf_centos_rhel ( ) {
-	SERVICES_CHKCONFIG_2="on"
-	SERVICES_CHKCONFIG_3="on"
-	SERVICES_CHKCONFIG_4="on"
-	SERVICES_CHKCONFIG_5="on"
+	SERVICES_CRON="crond"
 }
 function conf_debian_ubuntu ( ) {
-	SERVICES_CHKCONFIG_2="on"
-	SERVICES_CHKCONFIG_3="on"
-	SERVICES_CHKCONFIG_4="on"
-	SERVICES_CHKCONFIG_5="on"
+	return
 }
 function conf_sles ( ) {
-	SERVICES_CHKCONFIG_3="on"
-	SERVICES_CHKCONFIG_5="on"
+	SERVICES_CHKCONFIG_2="off"
+	SERVICES_CHKCONFIG_4="off"
 }
 function conf_unknown ( ) {
 	return
@@ -201,6 +200,9 @@ function check_postfix () {
 		log 1 "$PRE: $MSG1"
 		return
 	fi
+	MSG0="master je zapnuty"
+	MSG1="master je vypnuty"
+	pgrep -x master > /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	ROOT="`postalias -q root /etc/aliases`"
 	MSG0="alias 'root' je spravne nastaveny:"
 	MSG1="alias 'root' neni spravne nastaveny"
@@ -225,7 +227,7 @@ function check_services () {
 	echo "* $PRE"
 	MSG0="cron je zapnuty"
 	MSG1="cron je vypnuty"
-	pgrep cron > /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
+	pgrep -x "$SERVICES_CRON" > /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	log 2 "$PRE: naslouchajici sluzby (PID/nazev)"
 	for SRV in `netstat -lnp | egrep "^(tcp|udp).*[0-9]*/" | sed "s/.*[^0-9]\([0-9]*\/[^ :]*\).*/\1/" | sort -n | uniq` ; do
 		SRV_NAME="`echo \"$SRV\" | cut -d \"/\" -f 2`"
