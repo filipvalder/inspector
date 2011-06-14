@@ -90,11 +90,11 @@ function check_filesystems ( ) {
 	I=0
 	PRE="Souborove systemy"
 	echo "* $PRE"
-	for FS in `grep "ext3" /etc/mtab | cut -d " " -f 1` ; do
+	for FS in `grep "ext[34]" /etc/mtab | cut -d " " -f 1` ; do
 		tune2fs -l $FS | grep -q "Filesystem state.*clean" || { FS_DAMAGED="$FS_DAMAGED $FS" && let I++ ; }
 	done
-	MSG0="ext3 jsou ciste"
-	MSG1="poskozene ext3:"
+	MSG0="ext3/ext4 jsou ciste"
+	MSG1="poskozene ext3/ext4:"
 	[ $I -eq 0 ] && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	log_list "$FS_DAMAGED"
 }
@@ -117,7 +117,6 @@ function check_net () {
 	I=0
 	PRE="Sit"
 	echo "* $PRE"
-	log 2 "$PRE: FQDN je '$HOSTNAME_FQDN'"
 	host $HOSTNAME_FQDN >& /dev/null && HOST="`host $HOSTNAME_FQDN`"
 	for IP in `echo $HOST | sed -r "s/.* has( IPv6)? address //"` ; do
 		host "$IP" | grep -q "domain name pointer $HOSTNAME_FQDN\.$" || IP_NOPTR="$IP_NOPTR $IP"
@@ -133,7 +132,7 @@ function check_net () {
 	done
 	MSG0="vsechna rozhrani maji prirazenou IP adresu"
 	MSG1="rozhrani, ktera nemaji prirazenou IP adresu:"
-	[ $I -eq 0 ] && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
+	[ $I -eq 0 ] && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
 	log_list "$IF_NOIP"
 	MSG0="iptables obsahuji nejaka pravidla"
 	MSG1="iptables neobsahuji zadna pravidla"
@@ -181,12 +180,15 @@ function check_other () {
 	MSG0="dconf je nainstalovany"
 	MSG1="dconf neni nainstalovany"
 	which dconf >& /dev/null && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
-	MSG0="logrotate.conf obsahuje parametr compress"
-	MSG1="logrotate.conf neobsahuje parametr compress"
+	MSG0="logrotate.conf obsahuje parametr 'compress'"
+	MSG1="logrotate.conf neobsahuje parametr 'compress'"
 	egrep -q "^[^#]*compress($|\W)" /etc/logrotate.conf && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
-	MSG0="logrotate.conf obsahuje parametr dateext"
-	MSG1="logrotate.conf neobsahuje parametr dateext"
+	MSG0="logrotate.conf obsahuje parametr 'dateext'"
+	MSG1="logrotate.conf neobsahuje parametr 'dateext'"
 	egrep -q "^[^#]*dateext($|\W)" /etc/logrotate.conf && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
+	MSG0="logwatch je nainstalovany"
+	MSG1="logwatch neni nainstalovany"
+	which logwatch >& /dev/null && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
 }
 function check_postfix () {
 	I=0
@@ -204,10 +206,21 @@ function check_postfix () {
 	MSG1="master je vypnuty"
 	pgrep -x master > /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
 	ROOT="`postalias -q root /etc/aliases`"
-	MSG0="alias 'root' je spravne nastaveny:"
-	MSG1="alias 'root' neni spravne nastaveny"
-	[ -n "$ROOT" ] && echo "$ROOT" | grep -q "@`echo $HOSTNAME_DOMAIN | sed \"s/\./\\\\\\\\./g\"`" && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
-	log_list "$ROOT"
+	MSG0="alias 'root' je presmerovany na:"
+	MSG1="alias 'root' je presmerovany do /dev/null"
+	MSG2="alias 'root' je presmerovany na neznamy cil:"
+	MSG3="alias 'root' neni presmerovany nikam"
+	if echo "$ROOT" | grep -q "@`echo $HOSTNAME_DOMAIN | sed \"s/\./\\\\\\\\./g\"`" ; then
+		log 0 "$PRE: $MSG0"
+		log_list "$ROOT"
+	elif echo "$ROOT" | grep -q "/dev/null" ; then
+		log 1 "$PRE: $MSG1"
+	elif [ -n "$ROOT" ] ; then
+		log 2 "$PRE: $MSG2"
+		log_list "$ROOT"
+	else
+		log 1 "$PRE: $MSG3"
+	fi
 	MSG0="myhostname odpovida tomuto stroji"
 	MSG1="myhostname neodpovida tomuto stroji"
 	postconf -h myhostname 2> /dev/null | egrep -q "^($HOSTNAME_FQDN|$HOSTNAME_SHORT)$" && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
@@ -235,8 +248,8 @@ function check_services () {
 		log 3 "$SRV"
 	done
 	SRV_LISTENING="`echo \"$SRV_LISTENING\" | sed -re \"s/ dhclient| xinetd//g\" -e \"s/ master/ postfix/\" -e \"s/ postmaster/ postgresql/\"`"
-	MSG0="sprava runlevelu je nainstalovana"
-	MSG1="sprava runlevelu neni nainstalovana"
+	MSG0="chkconfig je nainstalovany"
+	MSG1="chkconfig neni nainstalovany"
 	if which chkconfig >& /dev/null ; then
 		log 0 "$PRE: $MSG0"
 	else
@@ -304,7 +317,7 @@ function check_ssh () {
 	fi
 	grep -q "^[^#]*PasswordAuthentication.*no" /etc/ssh/sshd_config || let I++
 	MSG0="autentizace heslem je zakazana"
-	MSG1="doporucuje se autentizace verejnym klicem"
+	MSG1="doporucuje se autentizace vyhradne verejnym klicem"
 	[ $I -eq 0 ] && log 0 "$PRE: $MSG0" || log 2 "$PRE: $MSG1"
 	MSG0="prihlasovani prazdnym heslem je zakazane"
 	MSG1="prihlasovani prazdnym heslem je povolene"
@@ -332,23 +345,38 @@ function check_time () {
 	echo "* $PRE"
 	MSG0="ntpd je nainstalovany"
 	MSG1="ntpd neni nainstalovany"
+	[ "$VIRT" = "ano" ] && LVL=2 || LVL=1
 	if which ntpd >& /dev/null ; then
 		log 0 "$PRE: $MSG0"
 		PEERS="`ntpq -c peers 2> /dev/null`"
-		MSG0="hlavni ntp peer je dostupny"
-		MSG1="zadny hlavni ntp peer neni dostupny"
-		echo "$PEERS" | grep -q "^*" && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
-		MSG0="alespon jeden zalozni ntp kandidat je dostupny"
-		MSG1="zadny zalozni ntp kandidat neni dostupny"
-		echo "$PEERS" | grep -q "^+" && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
+		MSG0="hlavni ntp peer je mistni"
+		MSG1="hlavni ntp peer neni mistni"
+		MSG2="zadny hlavni ntp peer neni dostupny"
+		if echo "$PEERS" | grep -q "^*[^ ]*\.`echo $HOSTNAME_DOMAIN | sed \"s/\./\\\\\\\\./g\"`" ; then
+			log 0 "$PRE: $MSG0"
+		elif echo "$PEERS" | grep -q "^*" ; then
+			log 2 "$PRE: $MSG1"
+		else
+			log $LVL "$PRE: $MSG2"
+		fi
+		MSG0="alespon jeden zalozni ntp kandidat je mistni"
+		MSG1="alespon jeden zalozni ntp kandidat neni mistni"
+		MSG2="zadny zalozni ntp kandidat neni dostupny"
+		if echo "$PEERS" | grep -q "^+[^ ]*\.`echo $HOSTNAME_DOMAIN | sed \"s/\./\\\\\\\\./g\"`" ; then
+			log 0 "$PRE: $MSG0"
+		elif echo "$PEERS" | grep -q "^+" ; then
+			log 2 "$PRE: $MSG1"
+		else
+			log $LVL "$PRE: $MSG2"
+		fi
 	else
-		log 1 "$PRE: $MSG1"
+		log $LVL "$PRE: $MSG1"
 		MSG0="ntpdate je nainstalovany"
 		MSG1="ntpdate neni nainstalovany"
-		which ntpdate >& /dev/null && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
-		MSG0="cron pro ntpdate byl nalezen"
-		MSG1="cron pro ntpdate nebyl nalezen"
-		grep -ilr "^[^#]*ntpdate" /etc/cron* && log 0 "$PRE: $MSG0" || log 1 "$PRE: $MSG1"
+		which ntpdate >& /dev/null && log 0 "$PRE: $MSG0" || log $LVL "$PRE: $MSG1"
+		MSG0="ntpdate synchronizace cronem je nastavena"
+		MSG1="ntpdate synchronizace cronem neni nastavena"
+		grep -ilr "^[^#]*ntpdate" /etc/cron* && log 0 "$PRE: $MSG0" || log $LVL "$PRE: $MSG1"
 	fi
 }
 function check_timezone () {
@@ -408,7 +436,8 @@ function header () {
 	[ ! -r "$DIST_FILE" ] && DIST_NAME="neznámá"
 	printf %-16s%s\\n "Distribuce:" "$DIST_NAME"
 	lspci | grep -cq VMware && VIRT="ano" || VIRT="ne"
-	printf %-16s%s\\n "Virt. stroj:" "$VIRT"
+	printf %-16s%s\\n "VMware stroj:" "$VIRT"
+	printf %-16s%s\\n "FQDN:" "$HOSTNAME_FQDN"
 }
 
 # Zaznam
