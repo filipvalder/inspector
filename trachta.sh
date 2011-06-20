@@ -3,7 +3,7 @@
 # Datum: 20.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062002
+# Verze: STABILNI_2011062003
 
 
 # Konfigurace
@@ -396,7 +396,7 @@ function check_update () {
 	MSG0="verejny klic je zavedeny"
 	MSG1="verejny klic neni zavedeny"
 	wget -qP "$TMP_DIR" "$UPDATE_PUBKEY_URL" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
-	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f 3-`/"
+	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f 4-`"
 	MSG0="novy zdrojovy soubor je overeny"
 	MSG1="novy zdrojovy soubor neni overeny"
 	openssl dgst -sha256 -verify "$TMP_DIR/$PUBKEY_FILE" -signature "$TMP_DIR/$NAME_FULL.signature" "$TMP_DIR/$NAME_FULL" > /dev/null && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
