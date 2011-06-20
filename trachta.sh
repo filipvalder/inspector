@@ -3,7 +3,7 @@
 # Datum: 20.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062001
+# Verze: STABILNI_2011062002
 
 
 # Konfigurace
@@ -399,21 +399,22 @@ function check_update () {
 	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f 3-`/"
 	MSG0="novy zdrojovy soubor je overeny"
 	MSG1="novy zdrojovy soubor neni overeny"
-	openssl dgst -sha256 -verify $TMP_DIR/*.pub -signature "$TMP_DIR/$NAME_FULL.signature" "$TMP_DIR/$NAME_FULL" > /dev/null && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
+	openssl dgst -sha256 -verify "$TMP_DIR/$PUBKEY_FILE" -signature "$TMP_DIR/$NAME_FULL.signature" "$TMP_DIR/$NAME_FULL" > /dev/null && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
 	declare -i VER_CUR VER_NEW
 	VER_CUR="`grep \"^# Verze: \" $0 | head -n 1 | sed \"s/^# Verze: //\" | cut -d \"_\" -f 2`"
 	VER_NEW="`grep \"^# Verze: \" \"$TMP_DIR/$NAME_FULL\" | head -n 1 | sed \"s/^# Verze: //\" | cut -d \"_\" -f 2`"
 	MSG0="nova verze je k dispozici"
 	MSG1="stavajici verze je aktualni"
-	[ $VER_NEW -gt $VER_CUR ] && log 0 "$1: $MSG0" || { log 0 "$1: $MSG1" && return ; }
-	MSG0="nova verze byla nainstalovana"
-	MSG1="novou verzi se nepodarilo nainstalovat"
-	install -m 700 "$TMP_DIR/$NAME_FULL" "`readlink -f $0`" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
+	[ $VER_NEW -gt $VER_CUR ] && log 0 "$1: $MSG0" || { log 0 "$1: $MSG1" && let I++ ; }
+	if [ $I -eq 0 ] ; then
+		MSG0="nova verze byla nainstalovana"
+		MSG1="novou verzi se nepodarilo nainstalovat"
+		install -m 700 "$TMP_DIR/$NAME_FULL" "`readlink -f $0`" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
+	fi
 	MSG0="docasny adresar byl odstranen"
 	MSG1="docasny adresar se nepodarilo odstranit"
-	[ -n "$TMP_DIR" ] && rm -r "{$TMP_DIR:-/tmp/$NAME_FULL}" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
-	results
-	exit 0
+	[ -n "$TMP_DIR" ] && [ -n "$NAME_FULL" ] && rm -r "${TMP_DIR:-/tmp/$NAME_FULL}" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
+	[ $I -eq 0 ] && { results && exit 0 ; }
 }
 function check_users () {
 	I=0
