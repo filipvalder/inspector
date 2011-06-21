@@ -1,9 +1,9 @@
 #!/bin/bash
 # Autor: Filip Valder (filip.valder@vsb.cz)
-# Datum: 20.6.2011
+# Datum: 21.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062003
+# Verze: STABILNI_2011062100
 
 
 # Konfigurace
@@ -13,6 +13,8 @@ export LANG=C
 
 # Spolecna konfigurace
 function conf ( ) {
+	BASENAME_FULL=`basename $0`
+	BASENAME_SHORT=`basename $0 | cut -d "." -f 1`
 	CHECKS=(
 		"update|Aktualizace"
 		"system|System"
@@ -35,18 +37,17 @@ function conf ( ) {
 		"/etc/debian_version|debian_ubuntu|Debian/Ubuntu"
 		"/etc/SuSE-release|sles|SLES"
 	)
+	FULL_PATH="`readlink -f $0`"
 	HOSTNAME_DOMAIN=`hostname -d`
 	HOSTNAME_FQDN=`hostname -f`
 	HOSTNAME_SHORT=`hostname -s`
-	NAME_FULL=`basename $0`
-	NAME_SHORT=`basename $0 | cut -d "." -f 1`
 	SERVICES_CHKCONFIG_2="on"
 	SERVICES_CHKCONFIG_3="on"
 	SERVICES_CHKCONFIG_4="on"
 	SERVICES_CHKCONFIG_5="on"
 	SERVICES_CRON="cron"
 	UPDATE_PUBKEY_URL="https://ca.svetdoma.cz/filip@valder_cz.pub"
-	UPDATE_SOURCE_URL="https://www.github.com/filipvalder/inspector/raw/$NAME_SHORT"
+	UPDATE_SOURCE_URL="https://www.github.com/filipvalder/inspector/raw/$BASENAME_SHORT"
 }
 
 # Konfigurace distribuci
@@ -378,43 +379,61 @@ function check_update () {
 	I=0
 	PUBKEY_SERVER="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f -3`/"
 	MSG0="zdroj $PUBKEY_SERVER je overeny"
-	MSG1="zdroj $PUBKEY_SERVER neni overeny"
+	MSG1="zdroj $PUBKEY_SERVER se nepodarilo overit"
 	wget -qO /dev/null "$PUBKEY_SERVER" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
 	SOURCE_SERVER="`echo \"$UPDATE_SOURCE_URL\" | cut -d \"/\" -f -3`/"
 	MSG0="zdroj $SOURCE_SERVER je overeny"
-	MSG1="zdroj $SOURCE_SERVER neni overeny"
+	MSG1="zdroj $SOURCE_SERVER se nepodarilo overit"
 	wget -qO /dev/null "$SOURCE_SERVER" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
-	MSG0="docasny adresar je dostupny"
-	MSG1="docasny adresar neni dostupny"
-	TMP_DIR="`mktemp -d --tmpdir $NAME_FULL-XXXXXXXXXXXX`" && [ -w "$TMP_DIR" ] && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
-	MSG0="novy zdrojovy soubor je zavedeny"
-	MSG1="novy zdrojovy soubor neni zavedeny"
-	wget -qP "$TMP_DIR" "$UPDATE_SOURCE_URL/$NAME_FULL" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
-	MSG0="podpis noveho zdrojoveho souboru je zavedeny"
-	MSG1="podpis noveho zdrojoveho souboru neni zavedeny"
-	wget -qP "$TMP_DIR" "$UPDATE_SOURCE_URL/$NAME_FULL.signature" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
-	MSG0="verejny klic je zavedeny"
-	MSG1="verejny klic neni zavedeny"
-	wget -qP "$TMP_DIR" "$UPDATE_PUBKEY_URL" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
+	tmp_dir mk "$1" || return
+	for FILE in "$UPDATE_SOURCE_URL/$BASENAME_FULL" "$UPDATE_SOURCE_URL/$BASENAME_FULL.signature" "$UPDATE_PUBKEY_URL" ; do
+		wget -qP "$TMP_DIR" "$FILE" || { FILES_MISSING="$FILES_MISSING $FILE" && let I++ ; }
+	done
+	MSG0="vsechny potrebne soubory jsou stazene"
+	MSG1="soubory, ktere se nepodarilo stahnout:"
+	if [ $I -eq 0 ] ; then
+		log 0 "$1: $MSG0"
+	else
+		log 1 "$1: $MSG1"
+		log_list "$FILES_MISSING"
+		tmp_dir rm "$1"
+		return
+	fi
 	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f 4-`"
-	MSG0="novy zdrojovy soubor je overeny"
-	MSG1="novy zdrojovy soubor neni overeny"
-	openssl dgst -sha256 -verify "$TMP_DIR/$PUBKEY_FILE" -signature "$TMP_DIR/$NAME_FULL.signature" "$TMP_DIR/$NAME_FULL" > /dev/null && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
+	MSG0="stazeny zdrojovy soubor je overeny"
+	MSG1="stazeny zdrojovy soubor se nepodarilo overit"
+	if openssl dgst -sha256 -verify "$TMP_DIR/$PUBKEY_FILE" -signature "$TMP_DIR/$BASENAME_FULL.signature" "$TMP_DIR/$BASENAME_FULL" > /dev/null ; then
+		log 0 "$1: $MSG0"
+	else
+		log 1 "$1: $MSG1"
+		tmp_dir rm "$1"
+		return
+	fi
 	declare -i VER_CUR VER_NEW
 	VER_CUR="`grep \"^# Verze: \" $0 | head -n 1 | sed \"s/^# Verze: //\" | cut -d \"_\" -f 2`"
-	VER_NEW="`grep \"^# Verze: \" \"$TMP_DIR/$NAME_FULL\" | head -n 1 | sed \"s/^# Verze: //\" | cut -d \"_\" -f 2`"
-	MSG0="nova verze je k dispozici"
+	VER_NEW="`grep \"^# Verze: \" \"$TMP_DIR/$BASENAME_FULL\" | head -n 1 | sed \"s/^# Verze: //\" | cut -d \"_\" -f 2`"
+	MSG0="nova verze je dostupna"
 	MSG1="stavajici verze je aktualni"
-	[ $VER_NEW -gt $VER_CUR ] && log 0 "$1: $MSG0" || { log 0 "$1: $MSG1" && let I++ ; }
-	if [ $I -eq 0 ] ; then
-		MSG0="nova verze byla nainstalovana"
-		MSG1="novou verzi se nepodarilo nainstalovat"
-		install -m 700 "$TMP_DIR/$NAME_FULL" "`readlink -f $0`" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
+	if [ $VER_NEW -gt $VER_CUR ] ; then
+		log 0 "$1: $MSG0"
+	else
+		log 0 "$1: $MSG1"
+		tmp_dir rm "$1"
+		return
 	fi
-	MSG0="docasny adresar byl odstranen"
-	MSG1="docasny adresar se nepodarilo odstranit"
-	[ -n "$TMP_DIR" ] && [ -n "$NAME_FULL" ] && rm -r "${TMP_DIR:-/tmp/$NAME_FULL}" && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
-	[ $I -eq 0 ] && { results && exit 0 ; }
+	MSG0="nova verze byla nainstalovana"
+	MSG1="novou verzi se nepodarilo nainstalovat"
+	if mv "$FULL_PATH" "$FULL_PATH~" && install -m 700 "$TMP_DIR/$BASENAME_FULL" "$FULL_PATH" ; then
+		log 0 "$1: $MSG0"
+		rm "$FULL_PATH~"
+		tmp_dir rm "$1"
+		exit 0
+	else
+		log 1 "$1: $MSG1"
+		mv "$FULL_PATH~" "$FULL_PATH"
+		tmp_dir rm "$1"
+		exit 1
+	fi
 }
 function check_users () {
 	I=0
@@ -451,7 +470,7 @@ function check_unknown ( ) {
 # Hlavicka
 function header () {
 	echo
-	center "$NAME_SHORT na serveru $HOSTNAME_SHORT"
+	center "$BASENAME_SHORT na serveru $HOSTNAME_SHORT"
 	center "(spusteno `date +%-d.%-m.%Y\ v\ %-H:%M:%S`)"
 	echo "---------------------------------------------------------------------------"
 	printf %-16s%s\\n "Linux verze:" "`uname -a`"
@@ -533,6 +552,31 @@ function results () {
 	echo "* Chybne: ${ERR:-0}"
 	echo "* Upozorneni: ${WARN:-0}"
 	echo
+}
+
+# Docasny adresar
+function tmp_dir ( ) {
+	if [ "$1" = "mk" ] ; then
+		MSG0="docasny adresar je vytvoreny"
+		MSG1="docasny adresar se nepodarilo vytvorit"
+		if TMP_DIR="`mktemp -d --tmpdir $BASENAME_FULL-XXXXXXXXXXXX`" && [ -w "$TMP_DIR" ] ; then
+			log 0 "$2: $MSG0"
+			return 0
+		else
+			log 1 "$2: $MSG1"
+			return 1
+		fi
+	elif [ "$1" = "rm" ] ; then
+		MSG0="docasny adresar je odstraneny"
+		MSG1="docasny adresar se nepodarilo odstranit"
+		if [ -n "$TMP_DIR" ] && rm -r "$TMP_DIR" ; then
+			log 0 "$2: $MSG0"
+			return 0
+		else
+			log 1 "$2: $MSG1"
+			return 1
+		fi
+	fi
 }
 
 ## Ano/ne?
