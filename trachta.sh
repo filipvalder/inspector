@@ -3,7 +3,7 @@
 # Datum: 21.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062101
+# Verze: STABILNI_2011062102
 
 
 # Konfigurace
@@ -423,15 +423,15 @@ function check_update () {
 	fi
 	MSG0="nova verze byla nainstalovana"
 	MSG1="novou verzi se nepodarilo nainstalovat"
-	if mv "$FULL_PATH" "$FULL_PATH~" && install -m 700 "$TMP_DIR/$BASENAME_FULL" "$FULL_PATH" ; then
+	cp -a "$FULL_PATH" "$TMP_DIR/$BASENAME_FULL~"
+	if install -m 700 "$TMP_DIR/$BASENAME_FULL" "$FULL_PATH" ; then
 		log 0 "$1: $MSG0"
-		rm "$FULL_PATH~"
 		tmp_dir rm "$1"
 		results
 		exit 0
 	else
 		log 1 "$1: $MSG1"
-		mv "$FULL_PATH~" "$FULL_PATH"
+		mv "$TMP_DIR/$BASENAME_FULL~" "$FULL_PATH"
 		tmp_dir rm "$1"
 		results
 		exit 1
