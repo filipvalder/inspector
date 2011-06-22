@@ -36,12 +36,12 @@ zajisti vyssi duveryhodnost kodu. Priklad overeni:
 
     CentOS/RHEL: Korenovy certifikat ulozit jako docasny_soubor.
 
-        { echo ; openssl x509 -in docasny_soubor -text ; } >>
+        { echo ; openssl x509 -in docasny_soubor -text ; } >> \
         /etc/pki/tls/certs/ca-bundle.crt
 
     Debian/SLES/Ubuntu: Korenovy certifikat ulozit do /etc/ssl/certs/.
 
-        cd /etc/ssl/certs/ && ln -s svetdoma_cz-ca.crt `openssl x509
+        cd /etc/ssl/certs/ && ln -s svetdoma_cz-ca.crt `openssl x509 \
         -in svetdoma_cz-ca.crt -hash -noout`.0
 
  2. Ulozit podpis jako trachta.sh.signature.
