@@ -1,2 +1,86 @@
-Viz https://github.com/filipvalder/inspector/blob/master/README.mkd.
---------------------------------------------------------------------
+Obsah trachty
+-------------
+
+    trachta.sh                  Proprietarni verze inspektora
+    trachta.sh.signature        SHA256 podpis pro overovaci ucely
+
+Instrukce pro konfiguraci
+-------------------------
+
+Bez konfigurace.
+
+Instrukce pro instalaci
+-----------------------
+
+ 1. Ulozit skript do adresare s binarnimi soubory, napr. /root/bin/.
+ 2. Doporuceno: Overit duveryhodnost zdrojoveho kodu. Viz nize.
+ 3. Spustit skript.
+
+Instrukce pro obsluhu
+---------------------
+
+Skript samotny se *NIKDY* nepokusi o zmenu konfigurace serveru. Pouze
+shromazdi vsechny nezbytne informace a upozorni na pripadne vykonnostni,
+bezpecnostni a jine problemy.
+
+Soubory
+-------
+
+Meli byste overit OpenSSL podpis odpovidajiciho SHELL
+skriptu proti memu verejnemu klici, ktery najdete na
+https://ca.svetdoma.cz/filip@valder_cz.pub. Toto overeni treti stranou
+zajisti vyssi duveryhodnost kodu. Priklad overeni:
+
+ 1. Stahnout a nainstalovat korenovy certifikat autority SvetDoma.cz CA,
+ prip. i vydavatele certifikatu GitHub, Inc.
+
+        # CentOS/RHEL: Korenovy certifikat ulozit jako docasny_soubor.
+        { echo ; openssl x509 -in docasny_soubor -text ; } >> \
+        /etc/pki/tls/certs/ca-bundle.crt
+
+        # Debian/SLES/Ubuntu: Korenovy certifikat ulozit do
+        /etc/ssl/certs/.
+        cd /etc/ssl/certs/ && ln -s svetdoma_cz-ca.crt `openssl x509 \
+        -in svetdoma_cz-ca.crt -hash -noout`.0
+
+ 2. Ulozit podpis jako trachta.sh.signature.
+ 3. Ulozit verejny klic jako filip@valder_cz.pub.
+ 4. Spustit:
+
+        openssl dgst -sha256 -verify filip@valder_cz.pub -signature
+        trachta.sh.signature /root/bin/trachta.sh
+
+ 5. Pokud vystup rika 'Verified OK', muzete skript bezpecne spustit.
+ 6. Kdykoliv vyjde nova verze skriptu, automaticka aktualizacni funkce
+ zajisti jeho bezpecnou instalaci.
+
+Copyright a licencni ujednani
+-----------------------------
+
+ZADNY copyright, ZADNA licence. Pouzivejte skripty, jak uznate za vhodne,
+s tim, ze jejich autor nenese *ZADNOU* odpovednost.
+
+Kontaktni udaje
+---------------
+
+E-mail: filip@valder.cz
+
+Zname chyby
+-----------
+
+Hlaste je prosim!!!
+
+Reseni problemu
+---------------
+
+NEJDRIVE si pomozte sami, PAK TEPRVE kontaktujte autora.
+
+Prohlaseni a podekovani
+-----------------------
+
+Lide s otevrenou mysli vyvijeji software s otevrenym zdrojovym kodem.
+
+Zmeny
+-----
+
+Viz https://github.com/filipvalder/inspector/commits/trachta/.
