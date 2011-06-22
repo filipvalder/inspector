@@ -48,7 +48,7 @@ zajisti vyssi duveryhodnost kodu. Priklad overeni:
  3. Ulozit verejny klic jako filip@valder_cz.pub.
  4. Spustit:
 
-        openssl dgst -sha256 -verify filip@valder_cz.pub -signature
+        openssl dgst -sha256 -verify filip@valder_cz.pub -signature \
         trachta.sh.signature /root/bin/trachta.sh
 
  5. Pokud vystup rika 'Verified OK', muzete skript bezpecne spustit.

@@ -3,7 +3,7 @@
 # Datum: 21.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062201
+# Verze: STABILNI_2011062202
 
 
 # Konfigurace
