@@ -3,7 +3,7 @@
 # Datum: 21.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062102
+# Verze: STABILNI_2011062200
 
 
 # Konfigurace
@@ -295,8 +295,8 @@ function check_snmp () {
 	fi
 	ROCOMMUNITY="`grep \"^[^#]*rocommunity\" /etc/snmp/snmpd.conf | awk \"{print \\$2}\"`"
 	[ -z "$ROCOMMUNITY" ] && ROCOMMUNITY="`grep \"^[^#]*com2sec\" /etc/snmp/snmpd.conf | awk \"{print \\$4}\"`"
-	MSG0="zkusebni snmpget byl uspesny"
-	MSG1="zkusebni snmpget nebyl uspesny"
+	MSG0="zkusebni snmpget je uspesny"
+	MSG1="zkusebni snmpget neni uspesny"
 	snmpget -c $ROCOMMUNITY -v 1 localhost system.sysDescr.0 >& /dev/null && log 0 "$1: $MSG0" || log 1 "$1: $MSG1"
 }
 function check_ssh () {
@@ -379,18 +379,18 @@ function check_update () {
 	I=0
 	PUBKEY_SERVER="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f -3`/"
 	MSG0="zdroj $PUBKEY_SERVER je overeny"
-	MSG1="zdroj $PUBKEY_SERVER se nepodarilo overit"
+	MSG1="zdroj $PUBKEY_SERVER nelze overit"
 	wget -qO /dev/null "$PUBKEY_SERVER" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
 	SOURCE_SERVER="`echo \"$UPDATE_SOURCE_URL\" | cut -d \"/\" -f -3`/"
 	MSG0="zdroj $SOURCE_SERVER je overeny"
-	MSG1="zdroj $SOURCE_SERVER se nepodarilo overit"
+	MSG1="zdroj $SOURCE_SERVER nelze overit"
 	wget -qO /dev/null "$SOURCE_SERVER" && log 0 "$1: $MSG0" || { log 1 "$1: $MSG1" && return ; }
 	tmp_dir mk "$1" || return
 	for FILE in "$UPDATE_SOURCE_URL/$BASENAME_FULL" "$UPDATE_SOURCE_URL/$BASENAME_FULL.signature" "$UPDATE_PUBKEY_URL" ; do
 		wget -qP "$TMP_DIR" "$FILE" || { FILES_MISSING="$FILES_MISSING $FILE" && let I++ ; }
 	done
 	MSG0="vsechny potrebne soubory jsou stazene"
-	MSG1="soubory, ktere se nepodarilo stahnout:"
+	MSG1="soubory, ktere nelze stahnout:"
 	if [ $I -eq 0 ] ; then
 		log 0 "$1: $MSG0"
 	else
@@ -399,9 +399,9 @@ function check_update () {
 		tmp_dir rm "$1"
 		return
 	fi
-	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | cut -d \"/\" -f 4-`"
+	PUBKEY_FILE="`echo \"$UPDATE_PUBKEY_URL\" | rev | cut -d \"/\" -f 1 | rev`"
 	MSG0="stazeny zdrojovy soubor je overeny"
-	MSG1="stazeny zdrojovy soubor se nepodarilo overit"
+	MSG1="stazeny zdrojovy soubor nelze overit"
 	if openssl dgst -sha256 -verify "$TMP_DIR/$PUBKEY_FILE" -signature "$TMP_DIR/$BASENAME_FULL.signature" "$TMP_DIR/$BASENAME_FULL" > /dev/null ; then
 		log 0 "$1: $MSG0"
 	else
@@ -421,8 +421,8 @@ function check_update () {
 		tmp_dir rm "$1"
 		return
 	fi
-	MSG0="nova verze byla nainstalovana"
-	MSG1="novou verzi se nepodarilo nainstalovat"
+	MSG0="nova verze je nainstalovana"
+	MSG1="novou verzi nelze nainstalovat"
 	cp -a "$FULL_PATH" "$TMP_DIR/$BASENAME_FULL~"
 	if install -m 700 "$TMP_DIR/$BASENAME_FULL" "$FULL_PATH" ; then
 		log 0 "$1: $MSG0"
@@ -560,7 +560,7 @@ function results () {
 function tmp_dir ( ) {
 	if [ "$1" = "mk" ] ; then
 		MSG0="docasny adresar je vytvoreny"
-		MSG1="docasny adresar se nepodarilo vytvorit"
+		MSG1="docasny adresar nelze vytvorit"
 		if TMP_DIR="`mktemp -d --tmpdir $BASENAME_FULL-XXXXXXXXXXXX`" && [ -w "$TMP_DIR" ] ; then
 			log 0 "$2: $MSG0"
 			return 0
@@ -570,7 +570,7 @@ function tmp_dir ( ) {
 		fi
 	elif [ "$1" = "rm" ] ; then
 		MSG0="docasny adresar je odstraneny"
-		MSG1="docasny adresar se nepodarilo odstranit"
+		MSG1="docasny adresar nelze odstranit"
 		if [ -n "$TMP_DIR" ] && rm -r "$TMP_DIR" ; then
 			log 0 "$2: $MSG0"
 			return 0
