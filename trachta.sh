@@ -3,7 +3,7 @@
 # Datum: 21.6.2011
 # Popis: Nastroj pro distribucne nezavislou inspekci linuxoveho systemu (proprietarni verze)
 # Nazev: trachta.sh
-# Verze: STABILNI_2011062200
+# Verze: STABILNI_2011062201
 
 
 # Konfigurace
@@ -561,7 +561,10 @@ function tmp_dir ( ) {
 	if [ "$1" = "mk" ] ; then
 		MSG0="docasny adresar je vytvoreny"
 		MSG1="docasny adresar nelze vytvorit"
-		if TMP_DIR="`mktemp -d --tmpdir $BASENAME_FULL-XXXXXXXXXXXX`" && [ -w "$TMP_DIR" ] ; then
+		if TMP_DIR="`mktemp -d --tmpdir $BASENAME_FULL-XXXXXXXXXXXX 2> /dev/null`" && [ -w "$TMP_DIR" ] ; then
+			log 0 "$2: $MSG0"
+			return 0
+		elif TMP_DIR="`mktemp -d -t $BASENAME_FULL-XXXXXXXXXXXX`" && [ -w "$TMP_DIR" ] ; then
 			log 0 "$2: $MSG0"
 			return 0
 		else
